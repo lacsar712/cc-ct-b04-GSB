@@ -143,3 +143,49 @@ td {
   color: #b91c1c;
   font-weight: 600;
 }
+
+.preset-list {
+  list-style: none;
+  margin: 0.5rem 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.preset-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.preset-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  background: #e8edf5;
+  color: #1a2332;
+}
+
+.preset-btn.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.preset-prefix {
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+button.ghost.danger {
+  color: #b91c1c;
+}
+
+.rules {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.35rem;
+  color: #3c4658;
+  font-size: 0.92rem;
+}

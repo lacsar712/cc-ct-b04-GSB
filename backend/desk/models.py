@@ -57,3 +57,48 @@ class OffsetSubmission(models.Model):
 
     def __str__(self) -> str:
         return f"{self.tool_code} {self.offset_um}µm"
+
+
+class ScreenPreset(models.Model):
+    """按刀号字头筛查的命名预设，存后台，可点名切换。"""
+
+    name = models.CharField(max_length=40, unique=True)
+    tool_prefix = models.CharField(max_length=32)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="screen_presets",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["name", "id"]
+
+    def __str__(self) -> str:
+        return f"{self.name}（字头 {self.tool_prefix}）"
+
+
+class PresetChangeLog(models.Model):
+    """预设改动流水：名称与字头做快照留存，删预设后痕迹仍在。"""
+
+    class Action(models.TextChoices):
+        CREATE = "create", "新建"
+        DELETE = "delete", "删除"
+
+    action = models.CharField(max_length=8, choices=Action.choices)
+    preset_name = models.CharField(max_length=40)
+    tool_prefix = models.CharField(max_length=32)
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preset_logs",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.get_action_display()} {self.preset_name}"
