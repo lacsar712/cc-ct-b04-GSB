@@ -8,6 +8,7 @@ import {
   login,
   setSession,
 } from "./api";
+import ScreenPage from "./ScreenPage";
 
 const statusLabel = {
   pending: "待复核",
@@ -24,6 +25,7 @@ function readHash() {
   const raw = (location.hash || "#/").replace(/^#/, "") || "/";
   const m = raw.match(/^\/detail\/(\d+)/);
   if (m) return { name: "detail", id: Number(m[1]) };
+  if (raw === "/screen") return { name: "screen", id: null };
   return { name: "home", id: null };
 }
 
@@ -150,6 +152,16 @@ function App() {
             >
               复核总览
             </a>
+            <a
+              href="#/screen"
+              class={route().name === "screen" ? "active" : ""}
+              onClick={(e) => {
+                e.preventDefault();
+                location.hash = "#/screen";
+              }}
+            >
+              筛查台
+            </a>
           </nav>
         </Show>
       </header>
@@ -193,6 +205,10 @@ function App() {
             退出
           </button>
         </section>
+
+        <Show when={route().name === "screen"}>
+          <ScreenPage />
+        </Show>
 
         <Show when={route().name === "home"}>
           <Show when={user().can_write}>

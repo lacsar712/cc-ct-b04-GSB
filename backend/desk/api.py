@@ -2,11 +2,16 @@ from datetime import datetime
 from typing import Optional
 
 from django.http import HttpRequest
-from ninja import NinjaAPI, Schema
+from ninja import NinjaAPI, Query, Schema
 from ninja.errors import HttpError
 
 from desk.auth_utils import bearer_auth, create_access_token, verify_password
-from desk.models import OffsetSubmission, User
+from desk.models import OffsetSubmission, PresetChangeLog, ToolPrefixPreset, User
+from desk.services import (
+    PresetPermissionError,
+    create_preset,
+    delete_preset,
+)
 
 api = NinjaAPI(title="数控刀补复核台", version="1.0")
 
@@ -40,6 +45,35 @@ class SubmissionOut(Schema):
     verdict: str
     created_at: datetime
     reviewed_at: Optional[datetime]
+
+
+class ListQuery(Schema):
+    # 字头筛查条件：命中表与列表查询同源，过滤只在服务端做。
+    tool_prefix: Optional[str] = None
+
+
+class PresetIn(Schema):
+    name: str
+    prefix: str
+
+
+class PresetOut(Schema):
+    id: int
+    name: str
+    prefix: str
+    created_by: str
+    owned_by_me: bool
+    created_at: datetime
+
+
+class PresetLogOut(Schema):
+    id: int
+    preset_id: int
+    preset_name: str
+    prefix: str
+    action: str
+    actor_name: str
+    created_at: datetime
 
 
 def _to_out(row: OffsetSubmission) -> SubmissionOut:
@@ -76,9 +110,17 @@ def login(request: HttpRequest, body: LoginIn):
     }
 
 
+def _filtered_submissions(tool_prefix: Optional[str]):
+    """专页命中表与列表查询的唯一取数口径，禁止前端藏行。"""
+    qs = OffsetSubmission.objects.all()
+    if tool_prefix and tool_prefix.strip():
+        qs = qs.filter(tool_code__startswith=tool_prefix.strip())
+    return qs[:200]
+
+
 @api.get("/submissions", response=list[SubmissionOut], auth=bearer_auth)
-def list_submissions(request: HttpRequest):
-    rows = OffsetSubmission.objects.all()[:200]
+def list_submissions(request: HttpRequest, filters: ListQuery = Query(...)):
+    rows = _filtered_submissions(filters.tool_prefix)
     return [_to_out(r) for r in rows]
 
 
@@ -106,3 +148,67 @@ def create_submission(request: HttpRequest, body: SubmissionIn):
         status=OffsetSubmission.Status.PENDING,
     )
     return _to_out(row)
+
+
+@api.get("/presets", response=list[PresetOut], auth=bearer_auth)
+def list_presets(request: HttpRequest):
+    user: User = request.auth
+    rows = ToolPrefixPreset.objects.select_related("created_by").all()
+    return [
+        PresetOut(
+            id=r.id,
+            name=r.name,
+            prefix=r.prefix,
+            created_by=r.created_by.username,
+            owned_by_me=r.created_by_id == user.pk,
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]
+
+
+@api.post("/presets", response=PresetOut, auth=bearer_auth)
+def create_named_preset(request: HttpRequest, body: PresetIn):
+    # 操作员与复核员登录后均可新建命名预设。
+    user: User = request.auth
+    try:
+        preset = create_preset(name=body.name, prefix=body.prefix, actor=user)
+    except ValueError as exc:
+        raise HttpError(400, str(exc))
+    return PresetOut(
+        id=preset.id,
+        name=preset.name,
+        prefix=preset.prefix,
+        created_by=user.username,
+        owned_by_me=True,
+        created_at=preset.created_at,
+    )
+
+
+@api.delete("/presets/{preset_id}", auth=bearer_auth)
+def remove_preset(request: HttpRequest, preset_id: int):
+    user: User = request.auth
+    try:
+        delete_preset(preset_id=preset_id, actor=user)
+    except PresetPermissionError as exc:
+        raise HttpError(403, str(exc))
+    except ValueError as exc:
+        raise HttpError(404, str(exc))
+    return {"deleted": preset_id}
+
+
+@api.get("/preset-logs", response=list[PresetLogOut], auth=bearer_auth)
+def list_preset_logs(request: HttpRequest):
+    rows = PresetChangeLog.objects.all()[:200]
+    return [
+        PresetLogOut(
+            id=r.id,
+            preset_id=r.preset_id,
+            preset_name=r.preset_name,
+            prefix=r.prefix,
+            action=r.action,
+            actor_name=r.actor_name,
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]

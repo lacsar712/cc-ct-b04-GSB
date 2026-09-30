@@ -46,8 +46,10 @@ export function login(username, password) {
   });
 }
 
-export function fetchSubmissions() {
-  return request("/submissions");
+export function fetchSubmissions(toolPrefix) {
+  const prefix = (toolPrefix || "").trim();
+  const query = prefix ? `?tool_prefix=${encodeURIComponent(prefix)}` : "";
+  return request(`/submissions${query}`);
 }
 
 export function fetchSubmission(id) {
@@ -59,4 +61,23 @@ export function createSubmission(tool_code, offset_um) {
     method: "POST",
     body: JSON.stringify({ tool_code, offset_um: Number(offset_um) }),
   });
+}
+
+export function fetchPresets() {
+  return request("/presets");
+}
+
+export function createPreset(name, prefix) {
+  return request("/presets", {
+    method: "POST",
+    body: JSON.stringify({ name, prefix }),
+  });
+}
+
+export function deletePreset(id) {
+  return request(`/presets/${id}`, { method: "DELETE" });
+}
+
+export function fetchPresetLogs() {
+  return request("/preset-logs");
 }

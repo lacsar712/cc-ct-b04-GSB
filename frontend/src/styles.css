@@ -120,6 +120,84 @@ button.ghost {
   margin-top: 1rem;
 }
 
+.banner.ok {
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+
+.preset-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #c5ceda;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f6f8fc;
+}
+
+.preset-chip.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb inset;
+}
+
+.preset-chip .linklike {
+  border: none;
+  background: transparent;
+  color: #1e3a8a;
+  padding: 0.4rem 0.4rem 0.4rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.92rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.preset-chip .linklike:hover {
+  text-decoration: underline;
+}
+
+.preset-meta {
+  color: #5a6478;
+  font-size: 0.8rem;
+}
+
+.preset-chip .chip-del {
+  border: none;
+  border-left: 1px solid #c5ceda;
+  background: transparent;
+  color: #991b1b;
+  padding: 0 0.6rem;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 0;
+}
+
+.preset-chip .chip-del:hover {
+  background: #fee2e2;
+}
+
+.preset-create {
+  margin-top: 0.75rem;
+}
+
+.spec-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.35rem;
+  color: #44506a;
+  font-size: 0.92rem;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
